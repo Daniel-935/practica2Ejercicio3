@@ -7,6 +7,13 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.neural_network import MLPRegressor
 from sklearn.metrics import mean_squared_error
 
+#*Librerias para evaluar las clasificaciones
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import precision_score
+from sklearn.metrics import recall_score
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import f1_score
+
 # Función para cargar y dividir los datos de Swedish Auto Insurance Dataset
 def read_dataAutoInsur():
     dataset = pd.read_csv('AutoInsurSweden.csv')
@@ -34,38 +41,55 @@ def read_datapima_Diabetes():
     return X_train, X_test, y_train, y_test
 
 # Modelos de regresión
-def logistic_Regression(X_train, X_test, y_train, y_test):
+def logistic_Regression(X_train, X_test, y_train, y_test, op):
     model = LogisticRegression(max_iter=10000)
     # Ajustar el modelo a los datos de entrenamiento
     model.fit(X_train, y_train)
     # Predecir en el conjunto de prueba
     y_pred = model.predict(X_test)
-    # Calcular el error cuadrático medio
-    mse = mean_squared_error(y_test, y_pred)
-    print("Logistic Regression Mean Squared Error:", mse)
+    #* Nuevas metricas, solo algunas se pueden mostrar dependiendo el tipo de problema
+    #*Para el archivo 2
+    if op == 2:
+        accuracyLR = accuracy_score(y_test, y_pred)
+        print(f"Logistic Regression Accuracy: {accuracyLR}")
+    #* Para el archivo 3
+    elif op == 3:
+        accuracyLR = accuracy_score(y_test, y_pred)
+        precisionLR = precision_score(y_test, y_pred)
+        print(f"Logistic Regression Accuracy: {accuracyLR}")
+        print(f"Logistic Regression Precision: {precisionLR}")
+    
 
-def k_Nearest_Neighbors(X_train, X_test, y_train, y_test, n_neighbors=3):
+def k_Nearest_Neighbors(X_train, X_test, y_train, y_test, op, n_neighbors=3):
     model = KNeighborsRegressor(n_neighbors=n_neighbors)
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
     mse = mean_squared_error(y_test, y_pred)
     print("K-Nearest Neighbors Mean Squared Error:", mse)
 
-def support_Vector_Machine(X_train, X_test, y_train, y_test):
+def support_Vector_Machine(X_train, X_test, y_train, y_test, op):
     model = SVR()
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
     mse = mean_squared_error(y_test, y_pred)
     print("Support Vector Machine Mean Squared Error:", mse)
 
-def naive_Bayes(X_train, X_test, y_train, y_test):
+def naive_Bayes(X_train, X_test, y_train, y_test, op):
     model = GaussianNB()
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
-    mse = mean_squared_error(y_test, y_pred)
-    print("Naive Bayes Mean Squared Error:", mse)
+    #*Para el archivo 2
+    if op == 2:
+        accuracyNB = accuracy_score(y_test, y_pred)
+        print(f"Naive Bayes Accuracy: {accuracyNB}")
+    #* Para el archivo 3
+    elif op == 3:
+        accuracyNB = accuracy_score(y_test, y_pred)
+        precisionNB = precision_score(y_test, y_pred)
+        print(f"Naive Bayes Accuracy: {accuracyNB}")
+        print(f"Naive Bayes Precision: {precisionNB}")
 
-def MLP(X_train, X_test, y_train, y_test, hidden_layer_sizes=(100,50), max_iter=500):
+def MLP(X_train, X_test, y_train, y_test, op, hidden_layer_sizes=(100,50), max_iter=500):
     model = MLPRegressor(hidden_layer_sizes=hidden_layer_sizes, max_iter=max_iter)
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
@@ -99,11 +123,11 @@ while True:
                 X_train, X_test, y_train, y_test = read_datapima_Diabetes()
                 
             # Aplicar todos los modelos al dataset seleccionado
-            logistic_Regression(X_train, X_test, y_train, y_test)
-            k_Nearest_Neighbors(X_train, X_test, y_train, y_test)
-            support_Vector_Machine(X_train, X_test, y_train, y_test)
-            naive_Bayes(X_train, X_test, y_train, y_test)
-            MLP(X_train, X_test, y_train, y_test)
+            logistic_Regression(X_train, X_test, y_train, y_test, option)
+            k_Nearest_Neighbors(X_train, X_test, y_train, y_test, option)
+            support_Vector_Machine(X_train, X_test, y_train, y_test, option)
+            naive_Bayes(X_train, X_test, y_train, y_test, option)
+            MLP(X_train, X_test, y_train, y_test, option)
 
         else:
             print("Número de dataset no válido. Inténtelo de nuevo.")
