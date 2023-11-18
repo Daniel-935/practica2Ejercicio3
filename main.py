@@ -1,18 +1,16 @@
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
-from sklearn.neighbors import KNeighborsRegressor
-from sklearn.svm import SVR
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
 from sklearn.naive_bayes import GaussianNB
-from sklearn.neural_network import MLPRegressor
+from sklearn.neural_network import MLPClassifier
 from sklearn.metrics import mean_squared_error
 
 #*Librerias para evaluar las clasificaciones
-from sklearn.metrics import accuracy_score
-from sklearn.metrics import precision_score
-from sklearn.metrics import recall_score
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from sklearn.metrics import confusion_matrix
-from sklearn.metrics import f1_score
+from sklearn.metrics import precision_recall_fscore_support
 
 # Función para cargar y dividir los datos de Swedish Auto Insurance Dataset
 def read_dataAutoInsur():
@@ -27,16 +25,20 @@ def read_dataAutoInsur():
 def read_dataWineQuality():
     dataset = pd.read_csv('wine-Quality.csv', sep=",")
     # Separar las características (X) y la variable objetivo (y)
-    X = dataset.drop("quality", axis=1)
-    y = dataset["quality"]
+    #*Se divide de forma binaria el resultado en las dos posibles soluciones = bueno o malo
+    dataset['quality_label'] = dataset['quality'].apply(lambda x: 'bueno' if x >= 7 else 'malo')
+    X = dataset.drop(['quality', 'quality_label'], axis=1)
+    y = dataset['quality_label']
+    
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     return X_train, X_test, y_train, y_test
 
 # Función para cargar y dividir los datos de Pima Indians Diabetes
 def read_datapima_Diabetes():
     dataset = pd.read_csv('pima-indians-diabetes.csv', sep=",")
-    X = dataset.drop("Class variable (0 or 1)", axis=1)
-    y = dataset["Class variable (0 or 1)"]
+    #*Se divide el dataset en las entradas y salidas deseadas
+    X = dataset.iloc[:, :-1]
+    y = dataset.iloc[:, -1]
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     return X_train, X_test, y_train, y_test
 
@@ -47,54 +49,131 @@ def logistic_Regression(X_train, X_test, y_train, y_test, op):
     model.fit(X_train, y_train)
     # Predecir en el conjunto de prueba
     y_pred = model.predict(X_test)
-    #* Nuevas metricas, solo algunas se pueden mostrar dependiendo el tipo de problema
-    #*Para el archivo 2
+    #* Nuevas metricas
+    #! ******** PARA EL DATASET 2 ***********
     if op == 2:
-        accuracyLR = accuracy_score(y_test, y_pred)
-        print(f"Logistic Regression Accuracy: {accuracyLR}")
-    #* Para el archivo 3
+        accuracy = accuracy_score(y_test, y_pred)
+        #* Calcula la matriz de confusion a partir de las etiquetas establecidas previamente en la division del archivo de datos
+        tn, fp, fn, tp = confusion_matrix(y_test, y_pred, labels=['malo', 'bueno']).ravel()
+        specificity = tn / (tn + fp)
+
+        precision, recall, f1, _ = precision_recall_fscore_support(y_test, y_pred, average='binary', pos_label='bueno')
+    #! ******* PARA EL DATASET 3 ************
     elif op == 3:
-        accuracyLR = accuracy_score(y_test, y_pred)
-        precisionLR = precision_score(y_test, y_pred)
-        print(f"Logistic Regression Accuracy: {accuracyLR}")
-        print(f"Logistic Regression Precision: {precisionLR}")
+        accuracy = accuracy_score(y_test, y_pred)
+        precision = precision_score(y_test, y_pred)
+        recall = recall_score(y_test, y_pred)
+        tn, fp, fn, tp = confusion_matrix(y_test, y_pred).ravel()
+        specificity = tn / (tn + fp)
+        f1 = f1_score(y_test, y_pred)
+
+    print("==== Logistic Regression ====")
+    print(f"Accuracy: {accuracy}")
+    print(f"Precision: {precision}")
+    print(f"Recall: {recall}")
+    print(f"Specifity: {specificity}")
+    print(f"F1 Score: {f1}")
     
 
 def k_Nearest_Neighbors(X_train, X_test, y_train, y_test, op, n_neighbors=3):
-    model = KNeighborsRegressor(n_neighbors=n_neighbors)
+    model = KNeighborsClassifier(n_neighbors=n_neighbors)
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
-    mse = mean_squared_error(y_test, y_pred)
-    print("K-Nearest Neighbors Mean Squared Error:", mse)
+    
+    if op == 2:
+        accuracy = accuracy_score(y_test, y_pred)
+        tn, fp, fn, tp = confusion_matrix(y_test, y_pred, labels=['malo', 'bueno']).ravel()
+        specificity = tn / (tn + fp)
+        precision, recall, f1, _ = precision_recall_fscore_support(y_test, y_pred, average='binary', pos_label='bueno')
+    elif op == 3:
+        accuracy = accuracy_score(y_test, y_pred)
+        precision = precision_score(y_test, y_pred)
+        recall = recall_score(y_test, y_pred)
+        tn, fp, fn, tp = confusion_matrix(y_test, y_pred).ravel()
+        specificity = tn / (tn + fp)
+        f1 = f1_score(y_test, y_pred)
+
+    print("==== K-Nearest Neighbors ====")
+    print(f"Accuracy: {accuracy}")
+    print(f"Precision: {precision}")
+    print(f"Recall: {recall}")
+    print(f"Specifity: {specificity}")
+    print(f"F1 Score: {f1}")
 
 def support_Vector_Machine(X_train, X_test, y_train, y_test, op):
-    model = SVR()
+    model = SVC()
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
-    mse = mean_squared_error(y_test, y_pred)
-    print("Support Vector Machine Mean Squared Error:", mse)
+
+    if op == 2:
+        accuracy = accuracy_score(y_test, y_pred)
+        tn, fp, fn, tp = confusion_matrix(y_test, y_pred, labels=['malo', 'bueno']).ravel()
+        specificity = tn / (tn + fp)
+        precision, recall, f1, _ = precision_recall_fscore_support(y_test, y_pred, average='binary', pos_label='bueno')
+    elif op == 3:
+        accuracy = accuracy_score(y_test, y_pred)
+        precision = precision_score(y_test, y_pred)
+        recall = recall_score(y_test, y_pred)
+        tn, fp, fn, tp = confusion_matrix(y_test, y_pred).ravel()
+        specificity = tn / (tn + fp)
+        f1 = f1_score(y_test, y_pred)
+
+    print("==== Support Vector Machine ====")
+    print(f"Accuracy: {accuracy}")
+    print(f"Precision: {precision}")
+    print(f"Recall: {recall}")
+    print(f"Specifity: {specificity}")
+    print(f"F1 Score: {f1}")
 
 def naive_Bayes(X_train, X_test, y_train, y_test, op):
     model = GaussianNB()
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
-    #*Para el archivo 2
+    
     if op == 2:
-        accuracyNB = accuracy_score(y_test, y_pred)
-        print(f"Naive Bayes Accuracy: {accuracyNB}")
-    #* Para el archivo 3
+        accuracy = accuracy_score(y_test, y_pred)    
+        tn, fp, fn, tp = confusion_matrix(y_test, y_pred, labels=['malo', 'bueno']).ravel()
+        specificity = tn / (tn + fp)
+        precision, recall, f1, _ = precision_recall_fscore_support(y_test, y_pred, average='binary', pos_label='bueno')
     elif op == 3:
-        accuracyNB = accuracy_score(y_test, y_pred)
-        precisionNB = precision_score(y_test, y_pred)
-        print(f"Naive Bayes Accuracy: {accuracyNB}")
-        print(f"Naive Bayes Precision: {precisionNB}")
+        accuracy = accuracy_score(y_test, y_pred)
+        precision = precision_score(y_test, y_pred)
+        recall = recall_score(y_test, y_pred)
+        tn, fp, fn, tp = confusion_matrix(y_test, y_pred).ravel()
+        specificity = tn / (tn + fp)
+        f1 = f1_score(y_test, y_pred)
+
+    print("==== Naive Bayes ====")
+    print(f"Accuracy: {accuracy}")
+    print(f"Precision: {precision}")
+    print(f"Recall: {recall}")
+    print(f"Specifity: {specificity}")
+    print(f"F1 Score: {f1}")
 
 def MLP(X_train, X_test, y_train, y_test, op, hidden_layer_sizes=(100,50), max_iter=500):
-    model = MLPRegressor(hidden_layer_sizes=hidden_layer_sizes, max_iter=max_iter)
+    model = MLPClassifier(hidden_layer_sizes=hidden_layer_sizes, max_iter=max_iter)
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
-    mse = mean_squared_error(y_test, y_pred)
-    print("MLP (Neural Network) Mean Squared Error:", mse)
+    
+    if op == 2:
+        accuracy = accuracy_score(y_test, y_pred) 
+        tn, fp, fn, tp = confusion_matrix(y_test, y_pred, labels=['malo', 'bueno']).ravel()
+        specificity = tn / (tn + fp)
+        precision, recall, f1, _ = precision_recall_fscore_support(y_test, y_pred, average='binary', pos_label='bueno')
+    if op == 3:
+        accuracy = accuracy_score(y_test, y_pred)
+        precision = precision_score(y_test, y_pred)
+        recall = recall_score(y_test, y_pred)
+        tn, fp, fn, tp = confusion_matrix(y_test, y_pred).ravel()
+        specificity = tn / (tn + fp)
+        f1 = f1_score(y_test, y_pred)
+
+    print("==== MPL ====")
+    print(f"Accuracy: {accuracy}")
+    print(f"Precision: {precision}")
+    print(f"Recall: {recall}")
+    print(f"Specifity: {specificity}")
+    print(f"F1 Score: {f1}")
 
 # Lista de archivos
 file_names = ['AutoInsurSweden.csv','wine-Quality.csv', 'pima-indians-diabetes.csv']
